@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  description: "Простое API для библиотеки. Можно смотреть книги, добавлять, менят\
+    ь и удалять."
+  title: Library API
+  version: 1.0.0
+servers:
+- url: http://localhost:8080/api/v1
+security:
+- ApiKeyAuth: []
+tags:
+- description: Книги
+  name: books
+paths:
+  /books:
+    get:
+      operationId: get_books
+      parameters:
+      - description: Фильтр по автору
+        explode: true
+        in: query
+        name: author
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Сколько книг вернуть максимум
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Book'
+                type: array
+          description: Список книг
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Не передан или неправильный API ключ (не знаем кто ты)
+      summary: Получить список книг
+      tags:
+      - books
+      x-openapi-router-controller: openapi_server.controllers.books_controller
+    post:
+      operationId: create_book
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreate'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+          description: Книга создана
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Неправильные данные в запросе (например нет названия)
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Не передан или неправильный API ключ (не знаем кто ты)
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: "Ключ правильный, но добавлять книги может только библиотек\
+            арь"
+      summary: Добавить новую книгу
+      tags:
+      - books
+      x-openapi-router-controller: openapi_server.controllers.books_controller
+  /books/{bookId}:
+    delete:
+      operationId: delete_book
+      parameters:
+      - description: id книги
+        explode: false
+        in: path
+        name: bookId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+          description: Книга удалена
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Не передан или неправильный API ключ (не знаем кто ты)
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: "Ключ правильный, но удалять книги может только библиотекар\
+            ь"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Книги с таким id нет
+      summary: Удалить книгу
+      tags:
+      - books
+      x-openapi-router-controller: openapi_server.controllers.books_controller
+    get:
+      operationId: get_book_by_id
+      parameters:
+      - description: id книги
+        explode: false
+        in: path
+        name: bookId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+          description: Книга найдена
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Не передан или неправильный API ключ (не знаем кто ты)
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Книги с таким id нет
+      summary: Получить одну книгу по id
+      tags:
+      - books
+      x-openapi-router-controller: openapi_server.controllers.books_controller
+    put:
+      operationId: update_book
+      parameters:
+      - description: id книги
+        explode: false
+        in: path
+        name: bookId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookUpdate'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+          description: Книга изменена
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Неправильные данные в запросе
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Не передан или неправильный API ключ (не знаем кто ты)
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: "Ключ правильный, но менять книги может только библиотекарь"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Книги с таким id нет
+      summary: Изменить книгу
+      tags:
+      - books
+      x-openapi-router-controller: openapi_server.controllers.books_controller
+components:
+  schemas:
+    Book:
+      example:
+        year: 1869
+        author: Лев Толстой
+        available: true
+        id: 1
+        title: Война и мир
+      properties:
+        id:
+          example: 1
+          title: id
+          type: integer
+        title:
+          example: Война и мир
+          title: title
+          type: string
+        author:
+          example: Лев Толстой
+          title: author
+          type: string
+        year:
+          example: 1869
+          title: year
+          type: integer
+        available:
+          description: Можно ли сейчас взять книгу
+          example: true
+          title: available
+          type: boolean
+      required:
+      - author
+      - id
+      - title
+      title: Book
+      type: object
+    BookCreate:
+      example:
+        year: 1869
+        author: Лев Толстой
+        title: Война и мир
+      properties:
+        title:
+          example: Война и мир
+          minLength: 1
+          title: title
+          type: string
+        author:
+          example: Лев Толстой
+          minLength: 1
+          title: author
+          type: string
+        year:
+          example: 1869
+          title: year
+          type: integer
+      required:
+      - author
+      - title
+      title: BookCreate
+      type: object
+    BookUpdate:
+      example:
+        year: 1869
+        author: Лев Толстой
+        available: false
+        title: Война и мир
+      properties:
+        title:
+          example: Война и мир
+          minLength: 1
+          title: title
+          type: string
+        author:
+          example: Лев Толстой
+          minLength: 1
+          title: author
+          type: string
+        year:
+          example: 1869
+          title: year
+          type: integer
+        available:
+          example: false
+          title: available
+          type: boolean
+      required:
+      - author
+      - title
+      title: BookUpdate
+      type: object
+    Message:
+      example:
+        message: Книга удалена
+      properties:
+        message:
+          example: Книга удалена
+          title: message
+          type: string
+      title: Message
+      type: object
+    Error:
+      example:
+        code: 404
+        message: Книга не найдена
+      properties:
+        code:
+          example: 404
+          title: code
+          type: integer
+        message:
+          example: Книга не найдена
+          title: message
+          type: string
+      required:
+      - code
+      - message
+      title: Error
+      type: object
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: X-API-Key
+      type: apiKey
+      x-apikeyInfoFunc: openapi_server.controllers.security_controller.info_from_ApiKeyAuth
